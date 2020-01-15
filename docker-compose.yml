@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+    devenv:
+        build: ./
+        image: serialportgateway:latest
+        privileged: true
+        volumes:
+            - ${GATEWAY_CONFIG}:/config/config.cfg
+            - ${HARDWARE_WHITELIST}:/config/hardware-whitelist.txt
+            - ${SERIALPORT_BLACKLIST}:/config/port-blacklist.txt
+#            - ${LOG_PATH}:/logs
+        stdin_open: true
+        tty: true
+        entrypoint: /bin/bash
+    daemon:
+        build: ./
+        image: serialportgateway:latest
+        privileged: true
+        volumes:
+            - ${GATEWAY_CONFIG}:/config/config.cfg
+            - ${HARDWARE_WHITELIST}:/config/hardware-whitelist.txt
+            - ${SERIALPORT_BLACKLIST}:/config/port-blacklist.txt
+#            - ${LOG_PATH}:/logs
+        stdin_open: true
+        tty: true
+        restart: unless-stopped
+        entrypoint: /bin/bash -c "/repos/SerialPortGateway/bin/serial2console-gateway /config/config.cfg /config/hardware-whitelist.txt /config/port-blacklist.txt /logs"

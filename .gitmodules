@@ -1,0 +1,9 @@
+[submodule "dependencies/Exception"]
+	path = dependencies/Exception
+	url = https://github.com/je-s/Exception
+[submodule "dependencies/Logger"]
+	path = dependencies/Logger
+	url = https://github.com/je-s/Logger
+[submodule "dependencies/Config"]
+	path = dependencies/Config
+	url = https://github.com/je-s/Config

@@ -16,25 +16,25 @@ Features:
 * Can be used either dockerized or standalone
 
 # Table of Contens
-1. [Files & Folder structure](#Files-&-Folder-structure)
-2. [Dependencies](#Dependencies)
-3. [Installation](#Installation)
-4. [Including and compiling SerialPortGateway in a project](#Including-and-compiling-SerialPortGateway-in-a-project)
-5. [Code Documentation](#Code-Documentation)
-6. [Requirements for communicating between the SerialPortGateway and serial devices](#Requirements-for-communicating-between-the-SerialPortGateway-and-serial-devices)
-7. [Usage](#Usage)
-    1. [Configuration files](#Configuration-files)
-        1. [Main Config file](#Main-Config-file)
-        2. [Hardware ID Whitelist](#Hardware-ID-Whitelist)
-        3. [Serial Port Blacklist](#Serial-Port-Blacklist)
-    2. [Starting the application in a Docker container](#Starting-the-application-in-a-Docker-container)
-    3. [Basic usage](#Basic-usage)
-    4. [Inherit and extend SerialPortGateway](#Inherit-and-extend-SerialPortGateway)
-8. [To Do list](#To-Do-list)
-9. [Notes](#Notes)
-10. [License](#License)
+1. [Files and Folder structure](#files-and-folder-structure)
+2. [Dependencies](#dependencies)
+3. [Installation](#installation)
+4. [Including and compiling SerialPortGateway in a project](#including-and-compiling-serialportgateway-in-a-project)
+5. [Code Documentation](#code-documentation)
+6. [Requirements for communicating between the SerialPortGateway and serial devices](#requirements-for-communicating-between-the-serialportgateway-and-serial-devices)
+7. [Usage](#usage)
+    1. [Configuration files](#configuration-files)
+        1. [Main Config file](#main-config-file)
+        2. [Hardware ID Whitelist](#hardware-id-whitelist)
+        3. [Serial Port Blacklist](#serial-port-blacklist)
+    2. [Starting the application in a Docker container](#starting-the-application-in-a-docker-container)
+    3. [Basic usage](#basic-usage)
+    4. [Inherit and extend SerialPortGateway](#inherit-and-extend-serialportgateway)
+8. [To Do list](#to-do-list)
+9. [Notes](#notes)
+10. [License](#license)
 
-# Files & Folder structure
+# Files and Folder structure
 * `config` contains the configuration files
     * Sample Config file
     * Sample hardware ID whitelist
@@ -111,6 +111,7 @@ This is the basic config of the gateway. It uses the [Config](https://github.com
 The internal instance can be accessed with `Config * SerialPortGateway::getConfigInstance()`, in case you want to make use of it urself (as in the [Serial2MqttGateway](https://github.com/je-s/Serial2MqttGateway)).
 
 The config file needs to have following keys defined:
+
 | Key | Purpose | Value Description | Default |
 | --- | ------- | ----------------- | ------- |
 | LOGGING_ACTIVE | Whether logging to a file is active or not | 0 or 1 | 0 |

@@ -88,7 +88,7 @@ In order to compile SerialPortGateway, following files need to be compiled and l
 * `<path>/SerialPortGateway/dependencies/Config/src/Config.cpp`
 * `<path>/SerialPortGateway/src/SerialDevice.cpp`
 * `<path>/SerialPortGateway/src/SerialMessage.cpp`
-* `<path>/SerialPortGateway/src/SerialPortGatewacpp`
+* `<path>/SerialPortGateway/src/SerialPortGateway.cpp`
 
 (Take a look at the Makefile.)
 

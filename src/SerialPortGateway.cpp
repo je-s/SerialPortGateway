@@ -458,13 +458,13 @@ bool SerialPortGateway::addSerialDevice( std::string serialPort, bool suppressLo
         idRetrieved = retrieveDeviceId( serialDevice );
         serialDevice->getInstance()->flush();
     }
-    catch( const serial::IOException & e )
+    catch ( const serial::IOException & e )
     {
         getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\" due to an IOException: " + std::string( e.what() ) ) );
 
         return false;
     }
-    catch( const serial::SerialException & e )
+    catch ( const serial::SerialException & e )
     {
         getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\" due to an SerialException: " + std::string( e.what() ) ) );
 
@@ -606,7 +606,7 @@ bool SerialPortGateway::deleteSerialDevice( std::string deviceId )
 
                 properlyClosed = true;
             }
-            catch( const serial::IOException & e )
+            catch ( const serial::IOException & e )
             {
                 getLoggerInstance()->writeError( std::string( "Could not properly delete Serial Device with ID \"" + deviceId + "\" on port \"" + serialPort + "\" due to an IOException: " + std::string( e.what() ) ) );
 
@@ -687,7 +687,7 @@ void SerialPortGateway::readLoop( std::string deviceId )
                 std::thread( &SerialPortGateway::processMessage, this, deviceId, line ).detach();
             }
         }
-        catch( const serial::SerialException & e )
+        catch ( const serial::SerialException & e )
         {
             getLoggerInstance()->writeError( std::string( "Serial Port Error: " + std::string( e.what() ) ) );
             getLoggerInstance()->writeInfo( std::string( "Deleting Serial Device with ID \"" + deviceId + "\" due to an read error." ) );
@@ -867,7 +867,7 @@ void SerialPortGateway::sendMessageToSerialDeviceAsync( std::string deviceId, st
             getLoggerInstance()->writeInfo( std::string( "Device with ID \"" + deviceId + "\" not found. Message \"" + message + "\" can not be delivered." ) );
         }
     }
-    catch( const serial::SerialException & e )
+    catch ( const serial::SerialException & e )
     {
         getLoggerInstance()->writeError( std::string( "Serial Port Error: " + std::string( e.what() ) ) );
         getLoggerInstance()->writeInfo( std::string( "Deleting Serial Device with ID \"" + deviceId + "\" due to an write error." ) );

@@ -66,6 +66,7 @@ In case you want to use the SerialPortGateway without Docker, you need the follo
     * git must be version 2 or higher.
 * [wjwwood's serial library](https://github.com/wjwwood/serial). This also requires:
     * cmake, python, python-pip, catkin
+
 If there's anything not working, try to sync your configuration with that from the Dockerfile (Or drop me an issue if nothing helps).
 
 # Installation

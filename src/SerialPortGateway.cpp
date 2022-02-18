@@ -541,13 +541,12 @@ void SerialPortGateway::addNewSerialPortsLoop()
 
     while ( isStarted() )
     {
-        addNewSerialPorts( true );
-
         if ( scanInterval > 0 )
         {
+            addNewSerialPorts( true );
             std::this_thread::sleep_for( std::chrono::milliseconds( scanInterval ) );
         }
-        else // If scanInterval is 0, quit the loop after the first iteration
+        else // If scanInterval is 0, don't add new serial ports automatically and quit the loop immediately
         {
             break;
         }

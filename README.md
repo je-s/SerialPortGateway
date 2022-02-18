@@ -115,13 +115,13 @@ The config file needs to have following keys defined:
 
 | Key | Purpose | Value Description | Default |
 | --- | ------- | ----------------- | ------- |
-| LOGGING_ACTIVE | Whether logging to a file is active or not | 0 or 1 | 0 |
-| SCAN_INTERVAL | Interval in which should be scanned for new devices | Time between scans in ms<br>0 means no automatic scans | 0 |
-| WAIT_BEFORE_COMMUNICATION | Waiting time before an inital communication attempt to a device | Waiting time in ms<br> Must be > 0 | 500 |
-| BAUD_RATE | Baud rate to be used for communication from and to the serial device | Number > 0 | 9600 |
-| MESSAGE_DELIMITER | Message delimiter to be used for interpreting messages from serial devices | String | : |
-| COMMAND_GETID | Command which is used to request/retrieve the device ID for each of the connected devices | String | getid<br>As used with the [ArduinoStreamCommander](https://github.com/je-s/ArduinoStreamCommander) |
-| MESSAGE_TYPE_ID | Message type for messages which are intended to contain a device ID | String | id<br>As used with the [ArduinoStreamCommander](https://github.com/je-s/ArduinoStreamCommander) |
+| LOGGING_ACTIVE | Whether logging to a file is active or not | Boolean<br><br>0 or 1 | `0` |
+| SCAN_INTERVAL | Interval in which should be scanned for new devices | Integer<br><br>- Time between scans in ms<br>- 0 means no automatic scans | `0` |
+| WAIT_BEFORE_COMMUNICATION | Waiting time before an inital communication attempt to a device | Integer<br><br>- Waiting time in ms<br>- Must be > 0 | `500` |
+| BAUD_RATE | Baud rate to be used for communication from and to the serial device | Integer > 0 | `9600` |
+| MESSAGE_DELIMITER | Message delimiter to be used for interpreting messages from serial devices | String | `:` |
+| COMMAND_GETID | Command which is used to request/retrieve the device ID for each of the connected devices | String | `getid`<br><br>(As used with the [ArduinoStreamCommander](https://github.com/je-s/ArduinoStreamCommander)) |
+| MESSAGE_TYPE_ID | Message type for messages which are intended to contain a device ID | String | `id`<br><br>(As used with the [ArduinoStreamCommander](https://github.com/je-s/ArduinoStreamCommander)) |
 
 ### Hardware ID Whitelist
 The hardware ID whitelist lists all allowed hardware IDs;

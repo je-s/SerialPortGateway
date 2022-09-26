@@ -315,6 +315,14 @@ private:
     bool hasHardwareWhitelistEntry( std::string hardwareId );
 
     /**
+     * Retrieves the serial port's hardware ID.
+     *
+     * @param serialPort Serial port to get the hardware ID from.
+     * @return Serial port's hardware ID. Returns an empty string in case no ID could be retrieved.
+    */
+    std::string getHardwareId( std::string serialPort );
+
+    /**
      * Loads the serial port blacklist.
     */
     void loadSerialPortBlacklist();
@@ -381,6 +389,14 @@ private:
      * @return SerialDevicePointer, or null if nothing found.
     */
     SerialDevicePointer getSerialDeviceByPort( std::string serialPort );
+
+    /**
+     * Initialises the serial device (and retrieves the deviceId).
+     *
+     * @param serialDevice Serial device pointer -with all it's parameters- to initialise.
+     * @return Whether the serial device was successfully initialised or not.
+    */
+    bool initSerialDevice( SerialDevicePointer serialDevice );
 
     /**
      * Loop for reading data from a serial device.
@@ -478,7 +494,7 @@ private:
      * @param deviceId Device ID to send the message to.
      * @param message Message to send to the device.
     */
-    void sendMessageToSerialDeviceAsync( std::string deviceId, std::string message );
+    void sendMessageToSerialDeviceBlocking( std::string deviceId, std::string message );
 
 protected:
     // Methods
@@ -625,7 +641,7 @@ public:
 
     /**
      * Sends a message to a specific device ID.
-     * This function calls "sendMessageToSerialDeviceAsync" in a detached thread, which handles the main process of delivering messages to a device.
+     * This function calls "sendMessageToSerialDeviceBlocking" in a detached thread (making it async), which handles the main process of delivering messages to a device.
      *
      * @param deviceId Device ID to send the message to.
      * @param message Message to send to the device.

@@ -1,5 +1,5 @@
 FROM    debian:stretch
-LABEL   maintainer="JES <je@schober.industries>" \
+LABEL   maintainer="JES <je@aesyc.systems>" \
         version="1.0"
 ENV     DEBIAN_FRONTEND noninteractive
 ENV     LD_LIBRARY_PATH /usr/local/lib:/tmp/usr/local/lib

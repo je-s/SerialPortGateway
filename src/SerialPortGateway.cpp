@@ -312,6 +312,44 @@ bool SerialPortGateway::hasHardwareWhitelistEntry( std::string hardwareId )
     return false;
 }
 
+std::string SerialPortGateway::getHardwareId( std::string serialPort )
+{
+    // The sysfs information returns a string which contains the hardwareId
+    // Inside this string, the hardwareId is formatted as followed (if it exists): "[...] VID:PID=<4 character long VID>:<4 character long PID> [...]"
+    // Examples: "[...] USB VID:PID=1a86:7523 " or "[...] USB VID:PID=2341:0042 SNR=85438333935351F01180 [...]"
+    // -> We only need the characters after the key ("VID:PID="), until the next blank space (" ")
+
+    std::string hardwareId;
+
+    // VERY VERY VEEEEERY ugly workaround for getting the hardwareId, until we have another RELIABLE solution for this (e.g. a new, better [proably self-written] serial library)
+    // Unfortunately the serial libraries' "get_sysfs_info" function wasn't exposed, with which we could've done this directly. Without this ugly loop-workaround..
+    for ( serial::PortInfo const & serialPortInfo : serial::list_ports() )
+    {
+        if ( serialPortInfo.port == serialPort )
+        {
+            hardwareId = serialPortInfo.hardware_id;
+
+            break;
+        }
+    }
+
+    std::string key = "VID:PID=";
+    std::size_t keyPosition = hardwareId.find( key );
+    std::size_t valuePosition = keyPosition + key.length();
+    std::size_t hardwareIdLength = hardwareId.find_first_of( " ", valuePosition ) - valuePosition;
+
+    if ( keyPosition != std::string::npos && hardwareIdLength != std::string::npos )
+    {
+        hardwareId = hardwareId.substr( valuePosition, hardwareIdLength );
+
+        return hardwareId;
+    }
+    else
+    {
+        return "";
+    }
+}
+
 void SerialPortGateway::loadSerialPortBlacklist()
 {
     std::string fileName = getSerialPortBlacklistFile();
@@ -383,16 +421,6 @@ bool SerialPortGateway::addSerialDevice( std::string serialPort, bool suppressLo
         return false;
     }
 
-    if ( hasSerialPortBlacklistEntry( serialPort ) )
-    {
-        if ( !suppressLogs )
-        {
-            getLoggerInstance()->writeWarn( std::string( "Didn't add serial device on port \"" + serialPort + "\", because the port is blacklisted." ) );
-        }
-
-        return false;
-    }
-
     if ( SerialDevicePointer tempSerialDevice = getSerialDeviceByPort( serialPort ) )
     {
         if ( !suppressLogs )
@@ -403,84 +431,46 @@ bool SerialPortGateway::addSerialDevice( std::string serialPort, bool suppressLo
         return false;
     }
 
+    if ( hasSerialPortBlacklistEntry( serialPort ) )
+    {
+        if ( !suppressLogs )
+        {
+            getLoggerInstance()->writeWarn( std::string( "Didn't add serial device on port \"" + serialPort + "\", because the port is blacklisted." ) );
+        }
+
+        return false;
+    }
+
     if ( !isHardwareWhitelistEmpty() )
     {
-        // The sysfs information returns a string which contains the hardwareId
-        // Inside this string, the hardwareId is formatted as followed (if it exists): "[...] VID:PID=<4 character long VID>:<4 character long PID> [...]"
-        // Examples: "[...] USB VID:PID=1a86:7523 " or "[...] USB VID:PID=2341:0042 SNR=85438333935351F01180 [...]"
-        // -> We only need the characters after the key ("VID:PID="), until the next blank space (" ")
+        std::string hardwareId = getHardwareId( serialPort );
 
-        std::string hardwareId;
-
-        // VERY VERY VEEEEERY ugly workaround for getting the hardwareId, until we have another RELIABLE solution for this (e.g. a new, better [proably self-written] serial library)
-        // Unfortunately the serial libraries' "get_sysfs_info" function wasn't exposed, with which we could've done this directly. Without this ugly loop-workaround..
-        for ( serial::PortInfo const & serialPortInfo : serial::list_ports() )
+        if ( hardwareId.empty() )
         {
-            if ( serialPortInfo.port == serialPort )
+            if ( !suppressLogs )
             {
-                hardwareId = serialPortInfo.hardware_id;
-
-                break;
+                getLoggerInstance()->writeWarn( std::string( "Couldn't add device on port \"" + serialPort + "\", because the Hardware ID could not be retrieved." ) );
             }
-        }
-
-        std::string key = "VID:PID=";
-        std::size_t keyPosition = hardwareId.find( key );
-        std::size_t valuePosition = keyPosition + key.length();
-        std::size_t hardwareIdLength = hardwareId.find_first_of( " ", valuePosition ) - valuePosition;
-
-        if ( keyPosition != std::string::npos && hardwareIdLength != std::string::npos )
-        {
-            hardwareId = hardwareId.substr( valuePosition, hardwareIdLength );
-        }
-        else
-        {
-            getLoggerInstance()->writeWarn( std::string( "Couldn't add device on port \"" + serialPort + "\", because the Hardware ID could not be retrieved." ) );
 
             return false;
         }
 
         if ( !hasHardwareWhitelistEntry( hardwareId ) )
         {
-            getLoggerInstance()->writeWarn( std::string( "Didn't add device on port \"" + serialPort + "\", because Hardware ID \"" + hardwareId + "\" is not whitelisted." ) );
+            if ( !suppressLogs )
+            {
+                getLoggerInstance()->writeWarn( std::string( "Didn't add device on port \"" + serialPort + "\", because Hardware ID \"" + hardwareId + "\" is not whitelisted." ) );
+            }
 
             return false;
         }
+
     }
 
     SerialDevicePointer serialDevice = std::make_shared<SerialDevice>( serialPort, getBaudRate(), serial::Timeout::simpleTimeout( 250 ) );
-    bool idRetrieved = false;
 
-    try
+    if ( !initSerialDevice( serialDevice ) )
     {
-        serialDevice->init();
-        std::this_thread::sleep_for( std::chrono::milliseconds( getWaitBeforeCommunication() ) );
-        idRetrieved = retrieveDeviceId( serialDevice );
-        serialDevice->getInstance()->flush();
-    }
-    catch ( const serial::IOException & e )
-    {
-        getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\" due to an IOException: " + std::string( e.what() ) ) );
-
-        return false;
-    }
-    catch ( const serial::SerialException & e )
-    {
-        getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\" due to an SerialException: " + std::string( e.what() ) ) );
-
-        return false;
-    }
-    catch ( const serial::PortNotOpenedException & e )
-    {
-        getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\" due to an PortNotOpenedException: " + std::string( e.what() ) ) );
-
-        return false;
-    }
-
-    if ( !idRetrieved )
-    {
-        getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\", because the device didn't respond with a valid message containing the ID, or the ID was empty." ) );
-
         return false;
     }
 
@@ -490,7 +480,7 @@ bool SerialPortGateway::addSerialDevice( std::string serialPort, bool suppressLo
 
     if ( it == serialDevices->end() )
     {
-        (*serialDevices)[deviceId] = serialDevice;
+        ( * serialDevices )[deviceId] = serialDevice;
 
         getLoggerInstance()->writeInfo( std::string( "Added Serial Device with ID \"" + deviceId + "\" on port \"" + serialPort + "\"." ) );
 
@@ -571,7 +561,7 @@ SerialPortGateway::SerialDevicePointer SerialPortGateway::getSerialDeviceByPort(
 {
     SerialDevicePointer serialDevice = nullptr;
 
-    for ( std::pair<std::string, SerialDevicePointer> const & entry : *getSerialDevices() )
+    for ( std::pair<std::string, SerialDevicePointer> const & entry : * getSerialDevices() )
     {
         if ( entry.second->getPort() == serialPort )
         {
@@ -580,6 +570,47 @@ SerialPortGateway::SerialDevicePointer SerialPortGateway::getSerialDeviceByPort(
     }
 
     return serialDevice;
+}
+
+bool SerialPortGateway::initSerialDevice( SerialDevicePointer serialDevice )
+{
+    std::string serialPort = serialDevice->getPort();
+    bool idRetrieved = false;
+
+    try
+    {
+        serialDevice->init();
+        std::this_thread::sleep_for( std::chrono::milliseconds( getWaitBeforeCommunication() ) );
+        idRetrieved = retrieveDeviceId( serialDevice );
+        serialDevice->getInstance()->flush();
+    }
+    catch ( const serial::IOException & e )
+    {
+        getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\" due to an IOException: " + std::string( e.what() ) ) );
+
+        return false;
+    }
+    catch ( const serial::SerialException & e )
+    {
+        getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\" due to an SerialException: " + std::string( e.what() ) ) );
+
+        return false;
+    }
+    catch ( const serial::PortNotOpenedException & e )
+    {
+        getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\" due to an PortNotOpenedException: " + std::string( e.what() ) ) );
+
+        return false;
+    }
+
+    if ( !idRetrieved )
+    {
+        getLoggerInstance()->writeError( std::string( "Couldn't add serial device on port \"" + serialPort + "\", because the device didn't respond with a valid message containing the ID, or the ID was empty." ) );
+
+        return false;
+    }
+
+    return true;
 }
 
 bool SerialPortGateway::deleteSerialDevice( std::string deviceId )
@@ -653,7 +684,7 @@ unsigned int SerialPortGateway::deleteAllSerialDevices( bool suppressLogs )
 
     unsigned int numDevicesDeleted = 0;
 
-    for ( std::pair<std::string, SerialDevicePointer> const & entry : *getSerialDevices() )
+    for ( std::pair<std::string, SerialDevicePointer> const & entry : * getSerialDevices() )
     {
         if ( deleteSerialDevice( entry.first ) )
         {
@@ -726,7 +757,7 @@ void SerialPortGateway::setReadLoopStarted( std::string deviceId, bool started )
 {
     AtomicBoolPairMap * readLoopStates = getReadLoopStates();
 
-    (*readLoopStates)[deviceId].first = started;
+    ( * readLoopStates )[deviceId].first = started;
 }
 
 bool SerialPortGateway::isReadLoopStarted( std::string deviceId )
@@ -746,7 +777,7 @@ void SerialPortGateway::setReadLoopQuitted( std::string deviceId, bool quitted )
 {
     AtomicBoolPairMap * readLoopStates = getReadLoopStates();
 
-    (*readLoopStates)[deviceId].second = quitted;
+    ( * readLoopStates )[deviceId].second = quitted;
 }
 
 bool SerialPortGateway::isReadLoopQuitted( std::string deviceId )
@@ -841,7 +872,7 @@ void SerialPortGateway::processMessage( std::string deviceId, std::string messag
     std::thread( &SerialPortGateway::messageCallback, this, serialMessage ).detach();
 }
 
-void SerialPortGateway::sendMessageToSerialDeviceAsync( std::string deviceId, std::string message )
+void SerialPortGateway::sendMessageToSerialDeviceBlocking( std::string deviceId, std::string message )
 {
     try
     {
@@ -920,7 +951,7 @@ std::vector<std::string> SerialPortGateway::getDeviceIds()
 {
     std::vector<std::string> deviceIds;
 
-    for ( std::pair<std::string, SerialDevicePointer> const & entry : *getSerialDevices() )
+    for ( std::pair<std::string, SerialDevicePointer> const & entry : * getSerialDevices() )
     {
         deviceIds.insert( deviceIds.begin(), entry.first );
     }
@@ -984,7 +1015,7 @@ std::map<std::string, std::string> SerialPortGateway::getDeviceIdToSerialPortMap
 {
     std::map<std::string, std::string> deviceIdToSerialPortMappings;
 
-    for ( std::pair<std::string, SerialDevicePointer> const & entry : *getSerialDevices() )
+    for ( std::pair<std::string, SerialDevicePointer> const & entry : * getSerialDevices() )
     {
         deviceIdToSerialPortMappings[entry.first] = entry.second->getPort();
     }
@@ -1014,14 +1045,14 @@ std::string SerialPortGateway::getDeviceIdToSerialPortMappingList()
 
 void SerialPortGateway::sendMessageToSerialDevice( std::string deviceId, std::string message )
 {
-    std::thread( &SerialPortGateway::sendMessageToSerialDeviceAsync, this, deviceId, message ).detach();
+    std::thread( &SerialPortGateway::sendMessageToSerialDeviceBlocking, this, deviceId, message ).detach();
 }
 
 void SerialPortGateway::broadcastMessageToSerialDevices( std::string message )
 {
     for ( std::string deviceId : getDeviceIds() )
     {
-        std::thread( &SerialPortGateway::sendMessageToSerialDeviceAsync, this, deviceId, message ).detach();
+        std::thread( &SerialPortGateway::sendMessageToSerialDeviceBlocking, this, deviceId, message ).detach();
     }
 }
 
